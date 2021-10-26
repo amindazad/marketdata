@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 import time
+import itertools
 from datetime import datetime as dt
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -12,7 +13,6 @@ from data_utils import *
 
 # Load settings, launch browser and make directory
 settings = utils_get_settings()
-browser = launch_firefox_browser('', DeleteContents=False)
 safe_make_dir(settings['yfinance_splits'])
 
 # Load Market Calendar and loop through the dates
@@ -20,25 +20,44 @@ market_cal = pd.read_csv(settings['processed_path'] + 'market_calendar.csv')
 # Slicing to only this year
 # market_cal = market_cal[(market_cal['year'] == dt.now().year) & (market_cal['month'] == dt.now().month)]
 missed_dates = []
-market_cal = market_cal[market_cal['year'] == 2018]
 
-for marketdate in market_cal['market_date']:
-    print('Scrapping Splits', marketdate)
-    try:
-        # Go to the url
-        url = 'https://finance.yahoo.com/calendar/splits?day=' + marketdate
-        browser.get(url)
-        # Find the table
-        tbl = browser.find_element_by_xpath('/html/body/div[1]/div/div/div[1]/div/div[2]/div/div/div[7]/div/div/div/div/div[1]/table').get_attribute('outerHTML')
-        dfs = pd.read_html(tbl, header=0)
-        # Save as csv
-        df = dfs[0].to_csv(settings['yfinance_splits']+'yfinance_ipo_{}.csv'.format(marketdate), index=False)
-        browser.implicitly_wait(3)
-    except:
-        print(marketdate, 'Not Found')
-        missed_dates.append(marketdate)
-        pass
-browser.close()
+year = dt.today().year
+year_list = list(range(year, year-7, -1))
+month_list = list(range(1, 13))
+
+for month in month_list:
+    for year in year_list:
+
+        market_cal_1 = market_cal[
+            (market_cal['year'] == year)
+            & (market_cal['month'] == month)
+        ]
+        
+        browser = launch_firefox_browser('', DeleteContents=False)
+
+        for marketdate in market_cal_1['market_date']:
+            try:
+                # Go to the url
+                url = 'https://finance.yahoo.com/calendar/splits?day=' + marketdate
+                browser.get(url)
+                # Find the table
+                tbl = browser.find_element_by_xpath(
+                    '/html/body/div[1]/div/div/div[1]/div/div[2]/div/div/div[7]/div/div/div/div/div[1]/table'
+                ).get_attribute(
+                    'outerHTML'
+                )
+                dfs = pd.read_html(tbl, header=0)
+                # Save as csv
+                df = dfs[0].to_csv(
+                    settings['yfinance_splits']+'yfinance_ipo_{}.csv'.format(marketdate), index=False
+                )
+                print('Scrapped Splits', marketdate)
+                browser.implicitly_wait(3)
+            except:
+                print(marketdate, 'Not Found')
+                missed_dates.append(marketdate)
+                pass
+        browser.close()
 
 missed_dates_df = pd.DataFrame(missed_dates)
 
