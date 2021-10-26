@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Ignore data files 
+data/bod
+data/clean_bod
+data/processed
+data/raw
+data/temp
+hdf5/
+
+# Ignore .env
+*.env
