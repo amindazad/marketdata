@@ -105,6 +105,7 @@ def utils_get_settings():
     s['yfinance_econ_events'] =             s['raw_path']+'econ_events/'
     s['yfinance_data']  =                   s['raw_path']+'yfinance/'
     s['takion_path'] =                      s['raw_path']+'takion_exchange/'
+    s['alpha_advantage'] =                  s['raw_path']+'alpha_advantage/'
     
     s['symbols_path'] =                     s['processed_path'] + 'symbols_all.csv'
     s['symbols_path2'] =                    s['processed_path'] + 'quandl_symbol_lists/XXX_symbols.csv'
